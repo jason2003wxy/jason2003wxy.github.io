@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Projects on Jason Wang</title>
+    <link>https://example.com/tags/projects/</link>
+    <description>Recent content in Projects on Jason Wang</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-US</language>
+    <lastBuildDate>Sun, 09 Jul 2017 00:00:00 +0000</lastBuildDate>
+    
+	<atom:link href="https://example.com/tags/projects/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>my first post</title>
+      <link>https://example.com/blog/my-first-post/</link>
+      <pubDate>Sun, 09 Jul 2017 00:00:00 +0000</pubDate>
+      
+      <guid>https://example.com/blog/my-first-post/</guid>
+      <description> Test   Test  </description>
+    </item>
+    
+    <item>
+      <title>Projects</title>
+      <link>https://example.com/zzz_projects/</link>
+      <pubDate>Sun, 02 Oct 2016 22:55:05 -0400</pubDate>
+      
+      <guid>https://example.com/zzz_projects/</guid>
+      <description></description>
+    </item>
+    
+  </channel>
+</rss>
