@@ -11,11 +11,20 @@
     
     
     <item>
-      <title>R</title>
-      <link>/categories/r/</link>
+      <title>Projects</title>
+      <link>/categories/projects/</link>
+      <pubDate>Sun, 02 Oct 2016 22:55:05 -0400</pubDate>
+      
+      <guid>/categories/projects/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>R Shiny Modeling</title>
+      <link>/categories/r-shiny-modeling/</link>
       <pubDate>Sun, 09 Jul 2017 00:00:00 +0000</pubDate>
       
-      <guid>/categories/r/</guid>
+      <guid>/categories/r-shiny-modeling/</guid>
       <description></description>
     </item>
     

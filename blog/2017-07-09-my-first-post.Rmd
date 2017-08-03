@@ -1,12 +1,12 @@
 ---
-title: my first post
+title: ARIMA Model Fitting App with Yahoo Finance Data
 author: Jason Wang
 date: '2017-07-09'
 slug: my-first-post
 categories:
-  - R
+  - R, Shiny, Modeling
 tags:
-  - projects
+  - projects, ARIMA, Module
 output:
   blogdown::html_page:
     toc: true
@@ -15,4 +15,5 @@ output:
 ---
 
 
-# Test
+# Modularize Shiny app code
+Following 
