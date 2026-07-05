@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>document.documentElement.className += ' js';</script>
+<title>LLM Wiki — CLAUDE.md Architecture</title>
+<meta name="description" content="A persistent investment-research knowledge base maintained by Claude Code: a dual-plane architecture pairing an interlinked markdown wiki with a structured financial-data engine, governed by CLAUDE.md.">
+<meta property="og:title" content="LLM Wiki — CLAUDE.md Architecture">
+<meta property="og:type" content="website">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+<style>
+/* ============================================================
+   LLM Wiki — scroll-native deck
+   Aesthetic: refined GitHub-dark "terminal", three semantic type roles.
+   Self-contained: no build step, no external JS libraries.
+   ============================================================ */
+
+:root{
+  /* canvas */
+  --bg:        #0d1117;
+  --bg-deep:   #010409;
+  --panel:     #161b22;
+  --panel-2:   #1b2230;
+  --border:    #30363d;
+  --border-soft:#21262d;
+
+  /* ink */
+  --text:      #e6edf3;
+  --dim:       #9aa5b1;
+  --faint:     #6e7681;
+  --ghost:     #484f58;
+
+  /* signal palette (semantic) */
+  --blue:  #58a6ff;   /* structure / constitution */
+  --green: #3fb950;   /* knowledge / wiki / output */
+  --amber: #d29922;   /* process / workflow */
+  --red:   #f85149;   /* problem / immutable */
+  --orange:#ffa657;   /* emphasis */
+  --lblue: #a5d6ff;   /* quotes */
+  --violet:#bc8cff;   /* data plane / derived */
+
+  /* type */
+  --f-display:'Bricolage Grotesque','Segoe UI',system-ui,sans-serif;
+  --f-body:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --f-mono:'JetBrains Mono','SF Mono',ui-monospace,'Cascadia Code',Menlo,monospace;
+
+  --wrap: 1180px;
+  --radius: 10px;
+}
+
+*{box-sizing:border-box;}
+
+html{
+  scroll-behavior:smooth;
+  scroll-snap-type:y proximity;
+  -webkit-text-size-adjust:100%;
+}
+@media (prefers-reduced-motion: reduce){
+  html{scroll-behavior:auto;scroll-snap-type:none;}
+}
+
+body{
+  margin:0;
+  font-family:var(--f-body);
+  color:var(--text);
+  background:var(--bg);
+  line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+  overflow-x:hidden;
+}
+
+/* atmosphere: fixed grid + radial glow + faint grain */
+body::before{
+  content:"";
+  position:fixed;
+  inset:0;
+  z-index:0;
+  pointer-events:none;
+  background:
+    radial-gradient(1100px 620px at 82% -8%, rgba(88,166,255,.10), transparent 60%),
+    radial-gradient(900px 600px at 0% 105%, rgba(188,140,255,.07), transparent 55%),
+    linear-gradient(rgba(48,54,61,.30) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(48,54,61,.30) 1px, transparent 1px);
+  background-size:100% 100%, 100% 100%, 46px 46px, 46px 46px;
+}
+body::after{
+  content:"";
+  position:fixed;
+  inset:0;
+  z-index:0;
+  pointer-events:none;
+  opacity:.035;
+  mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* ---------- scroll progress + side rail ---------- */
+.progress{
+  position:fixed;top:0;left:0;height:2px;width:0%;
+  background:linear-gradient(90deg,var(--blue),var(--violet),var(--green));
+  z-index:50;transition:width .1s linear;
+}
+.rail{
+  position:fixed;right:24px;top:50%;transform:translateY(-50%);
+  z-index:40;display:flex;flex-direction:column;gap:11px;
+}
+.rail a{
+  --c:var(--faint);
+  display:flex;align-items:center;gap:9px;justify-content:flex-end;
+  text-decoration:none;color:var(--c);font-family:var(--f-mono);
+  font-size:10px;letter-spacing:.04em;
+}
+.rail a .dot{
+  width:8px;height:8px;border-radius:50%;
+  border:1px solid var(--c);background:transparent;transition:all .25s ease;
+}
+.rail a .txt{opacity:0;transform:translateX(6px);transition:all .25s ease;white-space:nowrap;}
+.rail a:hover{--c:var(--dim);}
+.rail a:hover .txt{opacity:1;transform:none;}
+.rail a.active{--c:var(--blue);}
+.rail a.active .dot{background:var(--blue);box-shadow:0 0 0 4px rgba(88,166,255,.16);}
+.rail a.active .txt{opacity:1;transform:none;color:var(--blue);}
+@media (max-width:1080px){.rail{display:none;}}
+
+/* ---------- slide scaffold ---------- */
+.slide{
+  position:relative;z-index:1;
+  min-height:100svh;
+  display:flex;flex-direction:column;justify-content:center;
+  padding:clamp(2.2rem,4.4vw,4.6rem) clamp(1.15rem,5.5vw,6.5rem);
+  scroll-snap-align:start;
+  border-top:1px solid transparent;
+}
+.slide + .slide{border-top:1px solid var(--border-soft);}
+.inner{max-width:var(--wrap);width:100%;margin:0 auto;}
+
+/* reveal on scroll — progressive enhancement: content is hidden ONLY when JS is active,
+   so if JS ever fails the page stays fully readable (no blank sections). */
+.reveal{opacity:1;transform:none;}
+html.js .reveal{opacity:0;transform:translateY(26px);transition:opacity .7s cubic-bezier(.2,.7,.2,1),transform .7s cubic-bezier(.2,.7,.2,1);}
+html.js .reveal.in{opacity:1;transform:none;}
+.reveal.d1{transition-delay:.06s;} .reveal.d2{transition-delay:.13s;}
+.reveal.d3{transition-delay:.2s;} .reveal.d4{transition-delay:.27s;} .reveal.d5{transition-delay:.34s;}
+@media (prefers-reduced-motion: reduce){html.js .reveal{opacity:1;transform:none;transition:none;}}
+
+/* ---------- type ---------- */
+.kicker{
+  display:inline-flex;align-items:center;gap:.6em;
+  font-family:var(--f-mono);font-size:.72rem;font-weight:500;
+  letter-spacing:.18em;text-transform:uppercase;color:var(--faint);
+  margin-bottom:1.05rem;
+}
+.kicker::before{content:"";width:26px;height:1px;background:var(--blue);opacity:.8;}
+.kicker .n{color:var(--blue);}
+
+h1,h2,h3{font-family:var(--f-display);font-weight:700;line-height:1.04;margin:0;letter-spacing:-.02em;}
+.slide h2{font-size:clamp(1.9rem,4.4vw,3.05rem);margin-bottom:.5rem;}
+.slide h2 .accent{color:var(--blue);}
+.lede{font-size:clamp(1.02rem,1.7vw,1.24rem);color:var(--dim);max-width:60ch;margin:.2rem 0 0;font-weight:400;}
+.lede strong{color:var(--orange);font-weight:600;}
+
+h3.mini{font-family:var(--f-display);font-size:1.06rem;font-weight:700;margin-bottom:.35rem;}
+
+/* ---------- layout helpers ---------- */
+.grid{display:grid;gap:clamp(.7rem,1.4vw,1.05rem);margin-top:1.5rem;}
+.g2{grid-template-columns:1fr 1fr;}
+.g3{grid-template-columns:1fr 1fr 1fr;}
+.g6040{grid-template-columns:6fr 4fr;}
+.g4060{grid-template-columns:4fr 6fr;}
+.g5545{grid-template-columns:5.5fr 4.5fr;}
+@media (max-width:860px){.g2,.g3,.g6040,.g4060,.g5545{grid-template-columns:1fr;}}
+.stack{display:flex;flex-direction:column;gap:.85rem;}
+
+/* ---------- cards ---------- */
+.card{
+  background:linear-gradient(180deg,var(--panel),rgba(22,27,34,.55));
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:1rem 1.15rem;
+  position:relative;overflow:hidden;
+}
+.card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--border);opacity:.9;}
+.card.blue::before{background:var(--blue);}   .card.blue{border-color:rgba(88,166,255,.34);}
+.card.green::before{background:var(--green);} .card.green{border-color:rgba(63,185,80,.34);}
+.card.amber::before{background:var(--amber);} .card.amber{border-color:rgba(210,153,34,.34);}
+.card.red::before{background:var(--red);}     .card.red{border-color:rgba(248,81,73,.34);}
+.card.violet::before{background:var(--violet);}.card.violet{border-color:rgba(188,140,255,.36);}
+.card.flat::before{display:none;}
+.card p{margin:.35rem 0;}
+.card ul{margin:.35rem 0 .1rem;padding-left:1.15rem;}
+.card li{margin:.28rem 0;color:var(--text);}
+
+.label{
+  font-family:var(--f-mono);font-size:.66rem;font-weight:700;
+  letter-spacing:.13em;text-transform:uppercase;color:var(--dim);
+  display:block;margin-bottom:.55rem;
+}
+.card.blue .label{color:var(--blue);}
+.card.green .label{color:var(--green);}
+.card.amber .label{color:var(--amber);}
+.card.red .label{color:var(--red);}
+.card.violet .label{color:var(--violet);}
+
+/* lists & text */
+ul{margin:.4rem 0;padding-left:1.2rem;}
+li{margin:.3rem 0;}
+li::marker{color:var(--faint);}
+strong{color:var(--orange);font-weight:600;}
+em{color:var(--lblue);font-style:normal;}
+a{color:var(--blue);}
+.dim{color:var(--dim);} .faint{color:var(--faint);}
+.small{font-size:.86rem;}
+.tiny{font-size:.78rem;}
+
+/* code */
+code{
+  font-family:var(--f-mono);font-size:.86em;
+  background:var(--bg-deep);color:var(--lblue);
+  border:1px solid var(--border-soft);border-radius:5px;padding:.08em .38em;
+}
+pre{
+  font-family:var(--f-mono);
+  background:var(--bg-deep);
+  border:1px solid var(--border);
+  border-left:3px solid var(--blue);
+  border-radius:0 8px 8px 0;
+  padding:.85rem 1rem;margin:.2rem 0;
+  overflow:auto;font-size:.79rem;line-height:1.55;color:#cdd9e5;
+}
+pre code{background:none;border:none;padding:0;color:inherit;font-size:1em;}
+pre .c{color:var(--faint);}   /* comment */
+pre .k{color:var(--violet);}  /* keyword */
+pre .s{color:var(--green);}   /* string  */
+pre .fn{color:var(--blue);}   /* fn/name */
+pre .hl{color:var(--orange);} /* highlight */
+
+/* tables */
+table{border-collapse:collapse;width:100%;font-size:.82rem;margin:.25rem 0;}
+th{background:var(--panel);color:var(--blue);font-family:var(--f-mono);font-weight:500;
+   text-align:left;padding:.5em .7em;border:1px solid var(--border);letter-spacing:.02em;}
+td{border:1px solid var(--border);padding:.44em .7em;vertical-align:top;}
+tr:nth-child(even) td{background:rgba(22,27,34,.5);}
+td code{font-size:.82em;}
+
+/* callout */
+.callout{
+  border-left:3px solid var(--green);
+  background:linear-gradient(90deg,rgba(63,185,80,.08),transparent);
+  padding:.7rem 1.05rem;border-radius:0 8px 8px 0;margin-top:1.35rem;
+  color:var(--lblue);font-size:.96rem;
+}
+.callout.blue{border-color:var(--blue);background:linear-gradient(90deg,rgba(88,166,255,.09),transparent);}
+.callout.violet{border-color:var(--violet);background:linear-gradient(90deg,rgba(188,140,255,.09),transparent);}
+.callout strong{color:var(--text);}
+.callout .lead{font-family:var(--f-mono);font-size:.66rem;letter-spacing:.13em;text-transform:uppercase;color:var(--faint);display:block;margin-bottom:.3rem;}
+
+/* tags / pills */
+.tag{
+  display:inline-block;font-family:var(--f-mono);font-size:.66rem;font-weight:500;
+  padding:.16em .6em;border-radius:20px;vertical-align:middle;letter-spacing:.02em;
+  border:1px solid var(--border);color:var(--dim);background:var(--panel);
+}
+.tag.blue{color:var(--blue);border-color:rgba(88,166,255,.5);background:rgba(88,166,255,.09);}
+.tag.green{color:var(--green);border-color:rgba(63,185,80,.5);background:rgba(63,185,80,.09);}
+.tag.amber{color:var(--amber);border-color:rgba(210,153,34,.5);background:rgba(210,153,34,.09);}
+.tag.violet{color:var(--violet);border-color:rgba(188,140,255,.5);background:rgba(188,140,255,.09);}
+.tag.new{color:var(--bg);background:var(--violet);border-color:var(--violet);font-weight:700;}
+.tags{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.2rem;}
+
+/* stat numerals */
+.stat .num{font-family:var(--f-display);font-weight:800;font-size:clamp(1.7rem,3vw,2.5rem);
+  line-height:1;background:linear-gradient(140deg,#fff,var(--blue));-webkit-background-clip:text;background-clip:text;color:transparent;}
+.stat.v .num{background:linear-gradient(140deg,#fff,var(--violet));-webkit-background-clip:text;background-clip:text;color:transparent;}
+.stat.g .num{background:linear-gradient(140deg,#fff,var(--green));-webkit-background-clip:text;background-clip:text;color:transparent;}
+.stat .cap{font-family:var(--f-mono);font-size:.68rem;letter-spacing:.06em;color:var(--dim);text-transform:uppercase;margin-top:.35rem;display:block;}
+
+/* ===================== HERO ===================== */
+.hero{
+  min-height:100svh;display:flex;flex-direction:column;justify-content:center;
+  padding:clamp(2.2rem,5vw,5rem) clamp(1.2rem,6vw,7rem);
+  position:relative;z-index:1;scroll-snap-align:start;overflow:hidden;
+}
+.hero .badge{
+  font-family:var(--f-mono);font-size:.74rem;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--dim);display:inline-flex;align-items:center;gap:.7em;margin-bottom:1.7rem;
+}
+.hero .badge .blink{width:9px;height:9px;border-radius:50%;background:var(--green);box-shadow:0 0 0 0 rgba(63,185,80,.6);animation:pulse 2.4s infinite;}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(63,185,80,.5);}70%{box-shadow:0 0 0 9px rgba(63,185,80,0);}100%{box-shadow:0 0 0 0 rgba(63,185,80,0);}}
+.hero h1{
+  font-family:var(--f-display);font-weight:800;letter-spacing:-.03em;
+  font-size:clamp(3.2rem,11vw,8.2rem);line-height:.92;margin:0;
+}
+.hero h1 .grad{background:linear-gradient(115deg,#e6edf3 8%,var(--blue) 48%,var(--violet) 92%);-webkit-background-clip:text;background-clip:text;color:transparent;}
+.hero .sub{
+  font-family:var(--f-display);font-weight:600;
+  font-size:clamp(1.15rem,2.7vw,1.9rem);color:var(--text);margin:1.15rem 0 0;max-width:24ch;letter-spacing:-.01em;
+}
+.hero .desc{color:var(--dim);max-width:56ch;margin:1.15rem 0 0;font-size:clamp(1rem,1.5vw,1.12rem);}
+.hero .planes{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:1.9rem;}
+.hero .plane{font-family:var(--f-mono);font-size:.78rem;border:1px solid var(--border);border-radius:8px;padding:.5rem .8rem;color:var(--dim);background:rgba(22,27,34,.6);}
+.hero .plane b{color:var(--text);font-weight:600;}
+.hero .meta{font-family:var(--f-mono);font-size:.76rem;color:var(--faint);margin-top:2.4rem;line-height:1.9;}
+.hero .scrollhint{position:absolute;bottom:1.6rem;left:50%;transform:translateX(-50%);font-family:var(--f-mono);font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);display:flex;flex-direction:column;align-items:center;gap:.4rem;}
+.hero .scrollhint .arw{animation:bob 1.8s ease-in-out infinite;}
+@keyframes bob{0%,100%{transform:translateY(0);}50%{transform:translateY(5px);}}
+@media (prefers-reduced-motion: reduce){.blink,.arw{animation:none!important;}}
+
+/* diagram bits */
+.flow{display:flex;align-items:stretch;gap:.5rem;flex-wrap:wrap;margin-top:1.4rem;}
+.node{flex:1;min-width:150px;background:var(--panel);border:1px solid var(--border);border-radius:9px;padding:.75rem .9rem;}
+.node .t{font-family:var(--f-mono);font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;margin-bottom:.35rem;}
+.node.blue{border-color:rgba(88,166,255,.4);} .node.blue .t{color:var(--blue);}
+.node.green{border-color:rgba(63,185,80,.4);} .node.green .t{color:var(--green);}
+.node.violet{border-color:rgba(188,140,255,.42);} .node.violet .t{color:var(--violet);}
+.node .d{font-size:.84rem;color:var(--dim);}
+.arrow{align-self:center;color:var(--ghost);font-size:1.3rem;padding:0 .1rem;}
+@media (max-width:860px){.arrow{transform:rotate(90deg);align-self:center;}}
+
+.foot{margin-top:1.55rem;font-family:var(--f-mono);font-size:.72rem;color:var(--faint);}
+</style>
+</head>
+<body>
+
+<div class="progress" id="progress"></div>
+
+<nav class="rail" id="rail" aria-label="Slide navigation"></nav>
+
+<!-- ============================ 00 · HERO ============================ -->
+<header class="hero" id="s0">
+  <div class="reveal in">
+    <span class="badge"><span class="blink"></span>Investment-research knowledge base · maintained by Claude Code</span>
+  </div>
+  <h1 class="reveal in d1"><span class="grad">LLM Wiki</span></h1>
+  <p class="sub reveal in d2">Persistent knowledge, governed by a <span style="color:var(--blue)">CLAUDE.md</span> constitution.</p>
+  <p class="desc reveal in d3">A dual-plane system: an interlinked markdown wiki for reasoning and an audited SQLite engine for financial data — so the <em>session</em> is stateless but the <em>knowledge</em> compounds.</p>
+  <div class="planes reveal in d4">
+    <span class="plane"><b>Knowledge plane</b> · raw docs → workflows → wiki/*.md</span>
+    <span class="plane"><b>Data plane</b> · db_fin_2_wiki.sqlite → ETL → key_var</span>
+  </div>
+  <div class="meta reveal in d5">
+    Architecture demo · based on Andrej Karpathy's LLM Wiki pattern<br>
+    Updated 2026-07-05 · CLAUDE.md + templates/ + .claude/skills/ingest
+  </div>
+  <div class="scrollhint reveal in d5"><span>scroll</span><span class="arw">↓</span></div>
+</header>
+
+<!-- ============================ 01 · PROBLEM ============================ -->
+<section class="slide" id="s1">
+  <div class="inner">
+    <span class="kicker reveal"><span class="n">01</span> · The problem</span>
+    <h2 class="reveal d1">Research compounds.<br><span class="accent">LLM sessions don't.</span></h2>
+    <div class="grid g2">
+      <div class="card red reveal d2">
+        <span class="label">Without structure</span>
+        <ul>
+          <li>Behaviour varies session to session</li>
+          <li>No quality guarantee on any output</li>
+          <li>Errors repeat — there is no correction memory</li>
+          <li>The model answers from training data when the wiki is the source of truth</li>
+          <li>Context window evicted the moment the session ends</li>
+        </ul>
+      </div>
+      <div class="card green reveal d3">
+        <span class="label">With the CLAUDE.md architecture</span>
+        <ul>
+          <li>Every session identical — same routing, same gates</li>
+          <li>Quality enforced at write time, by checklist</li>
+          <li>Errors captured → lessons → prevention rules</li>
+          <li>Hard rule: <em>"no file in raw/ or page in wiki/ → do not answer"</em></li>
+          <li>Knowledge survives across sessions in <code>wiki/</code> and the DB</li>
+        </ul>
+      </div>
+    </div>
+    <div class="callout reveal d4">
+      <span class="lead">The key insight</span>
+      The <strong>session</strong> is stateless, but the <strong>wiki is persistent</strong> — and CLAUDE.md makes the model behave as if it remembers everything it has ever ingested.
+    </div>
+  </div>
+</section>
+
+<!-- ============================ 02 · KARPATHY PATTERN ============================ -->
+<section class="slide" id="s2">
+  <div class="inner">
+    <span class="kicker reveal"><span class="n">02</span> · The pattern</span>
+    <h2 class="reveal d1">The Karpathy LLM&nbsp;Wiki loop</h2>
+    <p class="lede reveal d1">Three roles, one compounding artefact. The human curates; Claude maintains; the wiki accretes.</p>
+    <div class="grid g3">
+      <div class="card blue reveal d2">
+        <span class="label">👤 Human — senior editor</span>
+        <ul>
+          <li>Drops source files into <code>raw/</code></li>
+          <li>Asks questions</li>
+          <li>Approves or corrects</li>
+          <li>Owns every synthesis decision</li>
+        </ul>
+      </div>
+      <div class="card amber reveal d3">
+        <span class="label">⚡ Claude Code — maintainer</span>
+        <ul>
+          <li>Reads sources, extracts &amp; structures</li>
+          <li>Maintains links + indexes</li>
+          <li>Queries the financial DB</li>
+          <li>Self-corrects via <code>lessons.md</code></li>
+        </ul>
+      </div>
+      <div class="card green reveal d4">
+        <span class="label">📁 wiki/ — the artefact</span>
+        <ul>
+          <li>Interlinked markdown pages</li>
+          <li>Source-cited, quality-gated</li>
+          <li>Compounds across sessions</li>
+          <li>Queryable by the human</li>
+        </ul>
+      </div>
+    </div>
+    <div class="callout blue reveal d5">
+      <span class="lead">What makes this more than a basic LLM wiki</span>
+      An <strong>explicit, layered architecture</strong> that makes the model's behaviour deterministic and auditable — plus a second, structured data plane behind it.
+    </div>
+  </div>
+</section>
+
+<!-- ============================ 03 · TWO PLANES (NEW) ============================ -->
+<section class="slide" id="s3">
+  <div class="inner">
+    <span class="kicker reveal"><span class="n">03</span> · System shape <span class="tag new" style="margin-left:.6em">new</span></span>
+    <h2 class="reveal d1">Two coupled planes</h2>
+    <p class="lede reveal d1">The wiki no longer just <em>reads</em> documents — it is fed by a maintained financial database. Prose reasoning and hard numbers live in separate planes that meet at ingest time.</p>
+    <div class="grid g2">
+      <div class="card green reveal d2">
+        <span class="label">Knowledge plane — reasoning</span>
+        <p class="small dim">Immutable source docs, structured by workflows into interlinked, source-cited markdown.</p>
+        <pre><span class="c"># narrative + judgement</span>
+raw/*.md  →  workflow-*.md  →  wiki/*.md
+            (routing, gates)   (prose, KPI,
+                                concepts, links)</pre>
+        <div class="tags">
+          <span class="tag green">annual / H1 / Q reports</span>
+          <span class="tag green">Q&amp;A · IPO · notes</span>
+          <span class="tag green">signal scan · assessment</span>
+        </div>
+      </div>
+      <div class="card violet reveal d3">
+        <span class="label">Data plane — financials <span class="tag new">new</span></span>
+        <p class="small dim">A maintained SQLite DB. ETL scripts derive a clean metrics table that the ingest workflow queries directly — no hand-transcribed statements.</p>
+        <pre><span class="c"># structured + auditable</span>
+db_fin_2_wiki.sqlite → yahoo_to_key_var.py
+                       mantain_wiki_db.py
+                     → <span class="hl">tabl_fin_key_var</span>
+                     → db_fin_query() at ingest</pre>
+        <div class="tags">
+          <span class="tag violet">P&amp;L · cash flow · balance sheet</span>
+          <span class="tag violet">89 metrics</span>
+          <span class="tag violet">A-share · H-share · US</span>
+        </div>
+      </div>
+    </div>
+    <div class="callout violet reveal d4">
+      <span class="lead">Where they meet</span>
+      At <strong>Step 3.6</strong> of a report ingest, Claude pulls the three financial statements straight from the DB via <code>db_fin_query</code>, then a <strong>currency cross-check gate (3.6a)</strong> verifies units before a single number reaches the page.
+    </div>
+  </div>
+</section>
+
+<!-- ============================ 04 · THREE LAYERS ============================ -->
+<section class="slide" id="s4">
+  <div class="inner">
+    <span class="kicker reveal"><span class="n">04</span> · Knowledge-plane architecture</span>
+    <h2 class="reveal d1">Three layers, one rule each</h2>
+    <p class="lede reveal d1">Every behaviour lives in exactly one layer. No layer defines what belongs to another.</p>
+    <div class="grid g3">
+      <div class="card blue reveal d2">
+        <span class="label">Layer 1 — Constitution</span>
+        <p><code>CLAUDE.md</code></p>
+        <ul>
+          <li>File-type routing (Step 0)</li>
+          <li>Immutable behavioural rules</li>
+          <li>Subagent strategy</li>
+          <li>Self-improvement loop</li>
+          <li>Points to the layers below</li>
+        </ul>
+      </div>
+      <div class="card amber reveal d3">
+        <span class="label">Layer 2 — Process</span>
+        <p><code>templates/workflow-*.md</code></p>
+        <ul>
+          <li>Step-by-step ingest workflows</li>
+          <li>Pre-flight checks &amp; gates</li>
+          <li>When to load which format file</li>
+          <li>Offer / confirmation points</li>
+          <li>Never defines output format</li>
+        </ul>
+      </div>
+      <div class="card green reveal d4">
+        <span class="label">Layer 3 — Output spec</span>
+        <p><code>templates/format-*.md</code></p>
+        <ul>
+          <li>Exact page structure</li>
+          <li>Pre-write checklists (S / C / SS / AS)</li>
+          <li>Conditional sections</li>
+          <li>Single source of truth for page content</li>
+        </ul>
+      </div>
+    </div>
+    <div class="callout blue reveal d5">
+      <span class="lead">Design principle</span>
+      CLAUDE.md <strong>orchestrates</strong>. Workflow files <strong>process</strong>. Format files <strong>define output</strong>.
+    </div>
+  </div>
+</section>
+
+<!-- ============================ 05 · LAYER 1 ============================ -->
+<section class="slide" id="s5">
+  <div class="inner">
+    <span class="kicker reveal"><span class="n">05</span> · Layer 1 — CLAUDE.md</span>
+    <h2 class="reveal d1">The routing table is the entry point</h2>
+    <p class="lede reveal d1">Every raw file dropped in is classified by filename, then handed to exactly one workflow. The <code>/ingest</code> skill wraps this end-to-end.</p>
+    <div class="grid g6040">
+      <div class="reveal d2">
+        <pre><span class="c">## Step 0 — File-type routing</span>
+
+<span class="hl">Filename pattern</span>            <span class="hl">Type</span>  <span class="hl">Load</span>
+not note_/work_/reflect_    1    workflow-reports.md
+work_*                      2    workflow-work.md
+reflect_*                   3    workflow-reflect.md
+note_* + Q&amp;A / QnA / QA      4a   workflow-notes.md → B1
+note_* + ipo                4b   workflow-notes.md → B2
+note_* + ppt                4c   workflow-notes.md → B3
+note_eisman*                4d   workflow-notes.md → B4
+any other note_*            4e   workflow-notes.md → B5
+<span class="k">DB update (*.sqlite)        5    workflow-db-update.md</span></pre>
+        <p class="tiny faint" style="margin-top:.5rem">Type 5 routes a database update — the data plane — through the same front door. <span style="color:var(--violet)">New.</span></p>
+      </div>
+      <div class="stack reveal d3">
+        <div class="card">
+          <span class="label">What CLAUDE.md controls</span>
+          <ul class="small">
+            <li>Routing — which file → which workflow</li>
+            <li>Rules — immutable constraints</li>
+            <li>Subagent strategy — when to parallelise</li>
+            <li>Self-improvement — session start + correction protocol</li>
+            <li>The detail-file map — index of all templates</li>
+          </ul>
+        </div>
+        <div class="card blue">
+          <span class="label">What it does <em>not</em> contain</span>
+          <p class="small">Extraction logic, page formats, quality-gate checklists — those live in the templates it points to.</p>
+          <div class="tags"><span class="tag blue">/ingest skill wraps Steps 0–10</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ 06 · LAYER 2 ============================ -->
+<section class="slide" id="s6">
+  <div class="inner">
+    <span class="kicker reveal"><span class="n">06</span> · Layer 2 — Workflows</span>
+    <h2 class="reveal d1">A workflow loads formats — it never defines them</h2>
+    <p class="lede reveal d1"><code>workflow-reports.md</code> — the main ingest path, 12 steps. Two DB-sourcing sub-steps now sit inside it.</p>
+    <div class="grid g5545">
+      <div class="reveal d2">
+<pre>Pre-flight  content sanity → re-route if
+            Q&amp;A / PPT / IPO cue found
+Pre-flight  HK governance protocol (A–D)
+
+ 1  Identify: currency, ticker, period
+ 2  Business model (first principles)
+ 3  Management-direct disclosures
+ 3.5 Chairman / CEO letter
+<span class="k">3.6 Financial tables ← db_fin_query()   [new]</span>
+<span class="k">3.6a Yahoo currency cross-check (gate)  [new]</span>
+ 4  MD&amp;A extraction
+ 5  KPI extraction → banking/nbfi/…md
+ 6  ── load format-source-summary.md ──
+ 7  ── load format-company-page.md ──
+ 8  Concept pages
+ 9  Quality gate (delegates to formats)
+10  Update index.md + log.md
+11  Offer signal-scan rebuild
+12  Offer assessment rebuild</pre>
+      </div>
+      <div class="stack reveal d3">
+        <div class="card amber">
+          <span class="label">Pattern — load on trigger</span>
+          <p class="small">Workflow files don't hold formats. They <em>load</em> the format file at the exact step that writes a page:</p>
+<pre><span class="c">## Step 6 — source summary page</span>
+Annual / H1  → format-source-summary.md
+CN Q1 / Q3   → format-quarterly-cn.md</pre>
+        </div>
+        <div class="card violet">
+          <span class="label">Pattern — DB before prose <span class="tag new">new</span></span>
+          <p class="small">Steps 3.6 / 3.6a pull P&amp;L, cash-flow and balance-sheet tables from the DB and verify their currency <em>before</em> any narrative is written. Numbers are sourced, not typed.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ 07 · LAYER 3 ============================ -->
+<section class="slide" id="s7">
+  <div class="inner">
+    <span class="kicker reveal"><span class="n">07</span> · Layer 3 — Format &amp; gates</span>
+    <h2 class="reveal d1">Quality gates live <span class="accent">inside</span> the format file</h2>
+    <p class="lede reveal d1">The single most important design move: the checklist that verifies a page sits in the same file that specifies it — loaded together, at write time.</p>
+    <div class="grid g5545">
+      <div class="reveal d2">
+<pre><span class="c"># Format — source summary page</span>
+
+<span class="c">## Pre-write checklist — verify BEFORE writing</span>
+
+ #   Required section              Applies to
+ S1  Overview of Significant Events   All
+ S2  Guidance &amp; Ownership Activity    All
+ S3  Results of Operations            All
+ S4  Cash Flows                       All
+ S5  Business Segments                CN annual/H1
+ S9  KPI: &lt;Type&gt; (≥10 rows)           All
+ S12 董事长 / CEO 报告                CN/HK annual
+ S13 Share-count row in KPI           All</pre>
+      </div>
+      <div class="stack reveal d3">
+        <div class="card green">
+          <span class="label">Four checklists, four format files</span>
+          <table>
+            <tr><th>File</th><th>Gate</th><th>Items</th></tr>
+            <tr><td>format-source-summary</td><td><code>S1–S13</code></td><td>13</td></tr>
+            <tr><td>format-company-page</td><td><code>C1–C13</code></td><td>13</td></tr>
+            <tr><td>format-signal-scan</td><td><code>SS1–SS10</code></td><td>10</td></tr>
+            <tr><td>format-assessment</td><td><code>AS1–AS9</code></td><td>9</td></tr>
+          </table>
+        </div>
+        <div class="card blue">
+          <span class="label">Single source of truth</span>
+          <p class="small"><em>"The format file is canonical for what a page must contain. Any quality gate targeting page content lives in the format file, not the workflow."</em></p>
+          <p class="tiny faint">— lessons.md, 2026-06-05</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ 08 · DATA PLANE (NEW) ============================ -->
+<section class="slide" id="s8">
+  <div class="inner">
+    <span class="kicker reveal"><span class="n">08</span> · The data plane <span class="tag new" style="margin-left:.6em">new</span></span>
+    <h2 class="reveal d1">A financial DB behind the wiki</h2>
+    <p class="lede reveal d1"><code>raw/db_fin_2_wiki.sqlite</code> — eight tables in three layers. Two ETL scripts converge raw vendor data into one clean metrics table the wiki can trust.</p>
+    <div class="grid g5545">
+      <div class="reveal d2">
+        <div class="flow" style="margin-top:.2rem">
+          <div class="node green">
+            <div class="t">Raw · CAS</div>
+            <div class="d"><code>tabl_fin_repo</code><br>A-share quarterly, cumulative</div>
+          </div>
+          <div class="node blue">
+            <div class="t">Yahoo · IFRS/GAAP</div>
+            <div class="d"><code>tabl_fin_repo_yahoo</code><br>H-share + US, annual &amp; quarterly</div>
+          </div>
+        </div>
+        <div class="arrow" style="text-align:center;transform:rotate(90deg);margin:.1rem 0">→</div>
+        <div class="node violet">
+          <div class="t">Derived · key_var</div>
+          <div class="d"><code>tabl_fin_key_var</code> — annual · TTM · quarterly, one schema across all markets. Populated by <code>mantain_wiki_db.py</code> (A-share) and <code>yahoo_to_key_var.py</code> (Yahoo).</div>
+        </div>
+        <div class="callout violet" style="margin-top:1rem">
+          <span class="lead">The update loop — Type 5</span>
+          <span class="small"><code>detect</code> the delta → <strong>confirm with the user</strong> → <code>produce</code> (INSERT OR REPLACE) → <code>verify</code> → log. Writing to the DB always requires an explicit opt-in.</span>
+        </div>
+      </div>
+      <div class="stack reveal d3">
+        <div class="grid g3" style="margin-top:0;gap:.6rem">
+          <div class="card violet flat stat v"><span class="num">10,095</span><span class="cap">metric rows</span></div>
+          <div class="card violet flat stat v"><span class="num">89</span><span class="cap">variables / row</span></div>
+          <div class="card violet flat stat v"><span class="num">484</span><span class="cap">securities</span></div>
+        </div>
+        <div class="card">
+          <span class="label">Query interface — db_fin_query.py</span>
+<pre><span class="k">from</span> analysis.db_fin_query <span class="k">import</span> (
+  <span class="fn">income_statement</span>, <span class="fn">cash_flow</span>,
+  <span class="fn">balance_sheet</span>, <span class="fn">key_metrics</span>)
+
+is_tbl = <span class="fn">income_statement</span>(sec, <span class="s">'2025FY'</span>)</pre>
+          <p class="tiny faint">Returns ready-to-paste markdown tables. Covers A-share (280) · H-share (103) · US (90).</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ 09 · PIPELINE ============================ -->
+<section class="slide" id="s9">
+  <div class="inner">
+    <span class="kicker reveal"><span class="n">09</span> · End to end</span>
+    <h2 class="reveal d1">The full ingest pipeline</h2>
+    <p class="lede reveal d1">One front door — the <code>/ingest</code> skill — routing four workflow lanes plus the data plane.</p>
+    <div class="stack reveal d2" style="margin-top:1.4rem">
+      <div class="flow" style="margin-top:0">
+        <div class="node blue" style="flex:0 0 auto">
+          <div class="t">raw/ → Step 0</div>
+          <div class="d">/ingest routing</div>
+        </div>
+        <div class="arrow">→</div>
+        <div class="node green">
+          <div class="t">workflow-reports.md · 12 steps</div>
+          <div class="d">pre-flight → 1–5 → <span style="color:var(--violet)">3.6 / 3.6a DB tables</span> → format-source-summary + format-company-page → S/C gate → index + log<br><span class="faint">Step 11 → signal scan · Step 12 → assessment</span></div>
+        </div>
+      </div>
+      <div class="grid g3" style="margin-top:0">
+        <div class="card flat"><span class="label" style="color:var(--dim)">workflow-notes.md</span><p class="tiny">B1 Q&amp;A/公告 · B2 IPO · B3 PPT · B4 Eisman · B5 Light</p></div>
+        <div class="card flat"><span class="label" style="color:var(--dim)">workflow-work.md</span><p class="tiny">work_* — regulatory, Basel, quant → work_index.md</p></div>
+        <div class="card violet"><span class="label">workflow-db-update.md <span class="tag new">new</span></span><p class="tiny">Type 5 — Yahoo (§A) + A-share (§B) ETL → tabl_fin_key_var</p></div>
+      </div>
+    </div>
+    <div class="callout blue reveal d3">
+      <span class="lead">Batch dispatch</span>
+      For ≥2 independent reports, <code>/ingest</code> fans out one subagent per company — each runs the full workflow, but the <strong>main agent</strong> alone updates <code>index.md</code> / <code>log.md</code> after a post-run financial cross-check.
+    </div>
+  </div>
+</section>
+
+<!-- ============================ 10 · SELF-IMPROVEMENT ============================ -->
+<section class="slide" id="s10">
+  <div class="inner">
+    <span class="kicker reveal"><span class="n">10</span> · Getting better on its own</span>
+    <h2 class="reveal d1">The self-improvement loop</h2>
+    <p class="lede reveal d1">The system improves without anyone re-engineering CLAUDE.md — corrections become permanent prevention rules.</p>
+    <div class="grid g2">
+      <div class="reveal d2">
+<pre><span class="c">## Self-Improvement Loop (CLAUDE.md)</span>
+
+<span class="hl">Session start:</span>
+  BEFORE responding to the first message,
+  read templates/lessons.md.
+  Apply its prevention rules to all
+  subsequent work in the session.
+
+<span class="hl">When the user corrects you:</span>
+  1. STOP. Do not start the fix yet.
+  2. Append a log.md entry:
+     ## [YYYY-MM-DD] correction | &lt;summary&gt;
+  3. THEN fix the underlying issue.
+  4. Write a structured lesson:
+     Trigger / Root cause / Fix / Rule</pre>
+      </div>
+      <div class="stack reveal d3">
+        <div class="card green">
+          <span class="label">An actual lessons.md entry</span>
+<pre><span class="hl">## 2026-06-05 — Quality gate drift</span>
+
+Trigger:  the S-table in the workflow had
+  drifted from the format file — three
+  copies of one gate diverged.
+Root cause: gate defined in the workflow,
+  not the format file. Duplication → drift.
+Fix: collapsed Step 9 to a pointer at the
+  two format files.
+Rule: any gate targeting page content lives
+  in the format file. Extend once.</pre>
+        </div>
+        <p class="tiny faint">Lessons are a working ruleset, not an archive — superseded entries are pruned when new ones land.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ 11 · SYNTHESIS ============================ -->
+<section class="slide" id="s11">
+  <div class="inner">
+    <span class="kicker reveal"><span class="n">11</span> · On top of the sources</span>
+    <h2 class="reveal d1">The synthesis pipeline</h2>
+    <p class="lede reveal d1">Two workflows sit above the ingested source summaries — each consumes the layer below, never the raw files again.</p>
+    <div class="grid g3">
+      <div class="card blue reveal d2">
+        <span class="label">Input layer</span>
+        <p class="small"><code>wiki/‹ticker›-‹period›.md</code><br><span class="dim">source summaries, one per report</span></p>
+        <p class="small"><code>wiki/‹company›.md</code><br><span class="dim">company page, updated each ingest</span></p>
+        <p class="tiny faint">Consumed by both synthesis workflows.</p>
+      </div>
+      <div class="card amber reveal d3">
+        <span class="label">workflow-signal-scan.md</span>
+        <p class="small">Walks <strong>72 universal signals</strong> (A/B/C/D/M classes) + the opportunity arm (Munger 4-patterns, §7 拐点).</p>
+        <p class="small">Loads <code>signal-applicability-matrix.md</code> — no per-test re-derivation. Fetches raw files <em>conditionally</em>, per signal.</p>
+        <p class="tiny faint">→ wiki/‹company›-财报信号.md</p>
+      </div>
+      <div class="card green reveal d4">
+        <span class="label">workflow-assessment.md</span>
+        <p class="small">Consumes the signal scan — does <strong>not</strong> re-read raw.</p>
+        <p class="small">Renders 5 verdicts: 真实盈利 · 可持续 · 能&amp;愿分享 · 估值 · 反向机会. Thresholds live in <code>format-assessment.md</code>.</p>
+        <p class="tiny faint">→ wiki/‹company›-评估.md</p>
+      </div>
+    </div>
+    <div class="callout reveal d5">
+      <span class="lead">Chain rule</span>
+      Assessment cannot run without a signal scan; a signal scan cannot run without ≥1 source summary. The dependency is enforced by pre-flight checks.
+    </div>
+  </div>
+</section>
+
+<!-- ============================ 12 · DECISIONS ============================ -->
+<section class="slide" id="s12">
+  <div class="inner">
+    <span class="kicker reveal"><span class="n">12</span> · Why it's built this way</span>
+    <h2 class="reveal d1">Key design decisions</h2>
+    <div class="grid g3">
+      <div class="card blue reveal d2">
+        <span class="label">01 · Format files own the gates</span>
+        <p class="small">The gate is loaded with the output spec at write time, so it can never drift from what it checks.</p>
+      </div>
+      <div class="card violet reveal d2">
+        <span class="label">02 · DB is the statement source <span class="tag new">new</span></span>
+        <p class="small">Step 3.6 pulls P&amp;L / CF / BS from <code>db_fin_query</code>; they are never hand-typed. Currency is verified at 3.6a before use.</p>
+      </div>
+      <div class="card amber reveal d3">
+        <span class="label">03 · Subagent parallelism is explicit</span>
+        <p class="small">CLAUDE.md names exactly when to fan out (batch ≥2 reports, HK checks, lint) and when not to (single ingest, single read).</p>
+      </div>
+      <div class="card green reveal d3">
+        <span class="label">04 · Synthesis is user-triggered</span>
+        <p class="small">Steps 11–12 are <em>offers</em>. The model never auto-rebuilds a scan or assessment over valid verdicts.</p>
+      </div>
+      <div class="card red reveal d4">
+        <span class="label">05 · Source authority is absolute</span>
+        <p class="small"><code>raw/</code> is immutable (the DB is the one maintained exception). No training-data answers when a source exists; no fabrication when it doesn't.</p>
+      </div>
+      <div class="card blue reveal d4">
+        <span class="label">06 · A correction writes twice</span>
+        <p class="small">A <code>log.md</code> line (what happened) <em>and</em> a <code>lessons.md</code> rule (how to prevent it). Neither substitutes for the other.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ 13 · CODING (NEW) ============================ -->
+<section class="slide" id="s13">
+  <div class="inner">
+    <span class="kicker reveal"><span class="n">13</span> · The system governs its own code <span class="tag new" style="margin-left:.6em">new</span></span>
+    <h2 class="reveal d1">Coding discipline is a layer too</h2>
+    <p class="lede reveal d1">The ETL and query scripts in <code>analysis/</code> are held to the same explicit standard as the prose. <code>coding.md</code> loads whenever Python or R is written, modified, reviewed, or tested.</p>
+    <div class="grid g4060">
+      <div class="stack reveal d2">
+        <div class="card"><span class="label">Loaded for</span><p class="small">Any code task in <code>analysis/</code>, <code>tools/</code>, or anywhere else — skipped only for read-only exploration.</p></div>
+        <div class="tags">
+          <span class="tag violet">yahoo_to_key_var.py</span>
+          <span class="tag violet">mantain_wiki_db.py</span>
+          <span class="tag violet">db_fin_query.py</span>
+        </div>
+      </div>
+      <div class="grid g2 reveal d3" style="margin-top:0">
+        <div class="card blue"><span class="label">Think before coding</span><p class="small">State assumptions. Surface tradeoffs. Stop when confused — name what's unclear rather than guess.</p></div>
+        <div class="card green"><span class="label">Simplicity first</span><p class="small">Minimum code that solves the problem. No speculative flexibility. 200 lines that could be 50 → rewrite.</p></div>
+        <div class="card amber"><span class="label">Surgical changes</span><p class="small">Touch only what the task needs. Match the surrounding code. No drive-by refactors.</p></div>
+        <div class="card"><span class="label">Worked patterns</span><p class="small"><code>coding_EXAMPLES.md</code> pairs each rule with a concrete before/after from this repo.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ 14 · DEMO ============================ -->
+<section class="slide" id="s14">
+  <div class="inner">
+    <span class="kicker reveal"><span class="n">14</span> · Live walk-through</span>
+    <h2 class="reveal d1">One annual report, start to finish</h2>
+    <div class="grid g5545">
+      <div class="card blue reveal d2">
+        <span class="label">What we'll watch</span>
+        <ul class="small">
+          <li>Drop <code>raw/600938_2025FY.md</code> into the project</li>
+          <li>Claude identifies: Type 1, A-share, annual report</li>
+          <li>DB pre-check — is <code>600938</code> in <code>meta_eq_code</code>?</li>
+          <li>HK governance pre-flight (H-share) → Stages A–D</li>
+          <li>Steps 1–5: identify → MD&amp;A → KPI</li>
+          <li><strong>Step 3.6:</strong> P&amp;L / CF / BS pulled from <code>db_fin_query</code></li>
+          <li>Step 6: <code>format-source-summary.md</code> — S1–S13 gate enforced</li>
+          <li>Step 11 offer: rebuild <code>中国海油-财报信号.md</code>?</li>
+        </ul>
+      </div>
+      <div class="card reveal d3" style="align-self:start">
+        <span class="label">Files touched in a single ingest</span>
+<pre>wiki/600938-2025-annual-report.md   <span class="c">← new</span>
+wiki/中国海油.md                     <span class="c">← updated</span>
+wiki/concept-oil-sands.md           <span class="c">← new</span>
+wiki/concept-桶油成本.md             <span class="c">← updated</span>
+wiki/index.md                       <span class="c">← updated</span>
+wiki/log.md                         <span class="c">← appended</span></pre>
+        <p class="small dim">A single source may touch 10–15 wiki pages. That is normal — and the financial tables inside them came from the DB, already currency-checked.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ 15 · FILE MAP ============================ -->
+<section class="slide" id="s15">
+  <div class="inner">
+    <span class="kicker reveal"><span class="n">15</span> · Appendix</span>
+    <h2 class="reveal d1">The file map</h2>
+    <div class="reveal d2">
+<pre>wiki_fin_report/
+├── <span class="fn">CLAUDE.md</span>                        <span class="c">← constitution: routing, rules, self-improvement</span>
+├── .claude/skills/<span class="fn">ingest</span>/          <span class="hl">← /ingest skill: wraps Steps 0–10 + dispatch [new]</span>
+├── raw/                             <span class="c">← immutable source documents</span>
+│   └── <span class="k">db_fin_2_wiki.sqlite</span>         <span class="hl">← financial DB (maintained, not immutable) [new]</span>
+├── wiki/                            <span class="c">← maintained by Claude</span>
+│   ├── index.md · work_index.md     <span class="c">← tables of contents</span>
+│   └── log.md                       <span class="c">← append-only operation record</span>
+├── templates/
+│   ├── workflow-reports.md          <span class="c">← Type 1: annual/H1/quarterly (12 steps)</span>
+│   ├── workflow-notes.md            <span class="c">← Type 4: note_* (B1 Q&amp;A · B2 IPO · B3 PPT · B4 Eisman · B5)</span>
+│   ├── workflow-work.md             <span class="c">← Type 2: work_* (regulatory / quant)</span>
+│   ├── <span class="k">workflow-db-update.md</span>        <span class="hl">← Type 5: Yahoo + A-share ETL → key_var [new]</span>
+│   ├── workflow-signal-scan.md      <span class="c">← synthesis: 72-signal scan</span>
+│   ├── workflow-assessment.md       <span class="c">← synthesis: 5 verdicts + valuation</span>
+│   ├── format-source-summary.md     <span class="c">← output spec: source summary (S1–S13)</span>
+│   ├── format-company-page.md       <span class="c">← output spec: company page (C1–C13)</span>
+│   ├── format-signal-scan.md · format-assessment.md · format-quarterly-cn.md
+│   ├── signal-applicability-matrix.md  <span class="c">← industry × signal lookup</span>
+│   ├── hk-governance-protocol.md · bilingual-rules.md
+│   ├── banking.md · nbfi.md · non-financial.md   <span class="c">← KPI checklists by industry</span>
+│   ├── <span class="k">coding.md · coding_EXAMPLES.md</span>   <span class="hl">← Python/R discipline + worked patterns [new]</span>
+│   └── lessons.md                   <span class="c">← active correction log (working ruleset)</span>
+├── analysis/
+│   ├── <span class="k">yahoo_to_key_var.py</span>          <span class="hl">← Yahoo ETL (H-share + US) [new]</span>
+│   ├── <span class="k">mantain_wiki_db.py</span>           <span class="hl">← A-share ETL [new]</span>
+│   └── <span class="k">db_fin_query.py</span>              <span class="hl">← statement + metric query interface [new]</span>
+└── docs/                            <span class="c">← project-meta: schema, cross-reference, this deck</span></pre>
+    </div>
+    <p class="foot reveal d3">LLM Wiki · CLAUDE.md architecture · maintained by Claude Code · 2026-07-05</p>
+  </div>
+</section>
+
+<script>
+/* ---- progress bar + reveals + active rail (no libraries) ---- */
+(function(){
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // build side rail from every section
+  var sections = Array.prototype.slice.call(document.querySelectorAll('header.hero, section.slide'));
+  var labels = ['Overview','Problem','Pattern','Two planes','Layers','CLAUDE.md','Workflows','Format gates','Data plane','Pipeline','Self-improve','Synthesis','Decisions','Coding','Demo','File map'];
+  var rail = document.getElementById('rail');
+  sections.forEach(function(sec, i){
+    var a = document.createElement('a');
+    a.href = '#' + sec.id;
+    a.innerHTML = '<span class="txt">'+(labels[i]||sec.id)+'</span><span class="dot"></span>';
+    rail.appendChild(a);
+  });
+  var navLinks = {};
+  rail.querySelectorAll('a').forEach(function(a){ navLinks[a.getAttribute('href').slice(1)] = a; });
+
+  // scroll progress
+  var bar = document.getElementById('progress');
+  function onScroll(){
+    var h = document.documentElement;
+    var pct = (h.scrollTop) / (h.scrollHeight - h.clientHeight) * 100;
+    bar.style.width = Math.max(0, Math.min(100, pct)) + '%';
+  }
+  window.addEventListener('scroll', onScroll, {passive:true});
+  onScroll();
+
+  // reveal-on-view
+  if('IntersectionObserver' in window && !reduce){
+    var revs = document.querySelectorAll('.reveal');
+    var ro = new IntersectionObserver(function(entries){
+      entries.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('in'); ro.unobserve(e.target); } });
+    }, {threshold:0.12, rootMargin:'0px 0px -8% 0px'});
+    revs.forEach(function(el){ if(!el.classList.contains('in')) ro.observe(el); });
+  } else {
+    document.querySelectorAll('.reveal').forEach(function(el){ el.classList.add('in'); });
+  }
+
+  // active section in rail
+  var so = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if(e.isIntersecting){
+        Object.keys(navLinks).forEach(function(k){ navLinks[k].classList.remove('active'); });
+        var link = navLinks[e.target.id];
+        if(link) link.classList.add('active');
+      }
+    });
+  }, {threshold:0.5});
+  sections.forEach(function(s){ so.observe(s); });
+})();
+</script>
+</body>
+</html>
