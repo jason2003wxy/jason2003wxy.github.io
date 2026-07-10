@@ -1,111 +1,89 @@
 <!DOCTYPE html>
-<html lang="en-US">
-  <head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="author" content="map[]" />
-    <meta name="description" content="Jason&#39;s R Shiny Portfolio">
-    <link rel="shortcut icon" type="image/x-icon" href="/img/favicon.ico">
-    <title>Projects</title>
-    <meta name="generator" content="Hugo 0.25" />
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
-    <link rel="stylesheet" type="text/css" href="/css/main.css" />
-    <link rel="stylesheet" type="text/css" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.3/css/font-awesome.min.css" />
-    <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:200,400,200bold,400old" />
-    
-    <!--[if lt IE 9]>
-			<script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
-			<script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
-		<![endif]-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script>document.documentElement.className += ' js';</script>
+<title>R Shiny Apps — Jason Wang</title>
+<meta name="description" content="Interactive R Shiny demos: portfolio exposure analytics, ARIMA forecasting, PPNR/PBIL stress testing, and an economic scenario generator.">
+<meta name="author" content="Jason Wang">
+<link rel="icon" type="image/svg+xml" href="/img/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/main.css">
+</head>
 
-    
-  </head>
-
-  <body>
-    <div id="wrap">
-
-      
-      <nav class="navbar navbar-default">
-  <div class="container">
-    <div class="navbar-header">
-      <a class="navbar-brand" href="/"><i class="fa fa-home"></i></a>
-    </div>
-    <div id="navbar">
-      <ul class="nav navbar-nav navbar-right">
-      
-        <li><a href="/categories/"> LLM wiki Demo</a></li>
-		  
-        <li><a href="/blog/">Notebook Demo</a></li>
-        
-        <li><a href="/projects/">App Demo</a></li>
-        
-        <li><a href="https://jason2003wxy.github.io/post/CV_JW.pdf">RESUME</a></li>
-        
-      
-      </ul>
-    </div>
-  </div>
+<body>
+<nav class="nav">
+  <a class="nav__brand" href="/"><span class="mark">JW</span> Jason Wang</a>
+  <ul class="nav__links">
+    <li><a href="/">Home</a></li>
+    <li><a href="/categories/">LLM Wiki</a></li>
+    <li><a href="/projects/">Apps</a></li>
+    <li><a href="/blog/">Notebook</a></li>
+    <li><a class="cv" href="/post/CV_JW.pdf">CV&nbsp;↗</a></li>
+  </ul>
 </nav>
 
-      
-        <section id="projects">
-  <div class="container">
-    <h3>Shiny App Demo</h3>
-    <div class="panel panel-default">
-      <div class="panel-body">
-	     
-        <h5>
-          <i class="fa fa-globe"></i>&nbsp;&nbsp;
-          <strong><a href="https://jason2003wxy.shinyapps.io/app_rwa_analysis/">Demo 1</a></strong>&nbsp;-&nbsp;Portfolio management dashboard to visualize exposure metrics with capacities of drill-down (e.g., examining top drivers, historical trending) and <strong>period-over-period</strong> comparison to illustrate portfolio dynamics, credit rating migration, etc.
-        </h5>	      
-	      
-        <h5>
-          <i class="fa fa-globe"></i>&nbsp;&nbsp;
-          <strong><a href="https://jasonwxy.shinyapps.io/APP_ARIMA/">Demo 2</a></strong>&nbsp;-&nbsp;R Shiny app (implemented with <strong><a href="https://github.com/jason2003wxy/DB_ARIMA/blob/master/server.R">modularization</a></strong>) for fitting ARIMA model for any financial time series obtained from Yahoo API. The app can be easily extended to multiple data sources (e.g., via Quandl) and data frequency.
-        </h5>
-      
-        <h5>
-          <i class="fa fa-globe"></i>&nbsp;&nbsp;
-          <strong><a href="https://jasonwxy.shinyapps.io/PPNR_PRA_LM_v0/">Demo 3</a></strong>&nbsp;-&nbsp;R Shiny app (implemented with modularization) for illustrating PRA&#39;s PPNR/PBIL stress testing models based on BoE open data. The app can facilitate expert overrides on model specification and parameters. Furthermore, the app can easily accommodate bank&#39;s internal data.
-        </h5>
-	      
-	      
-        <h5>
-          <i class="fa fa-globe"></i>&nbsp;&nbsp;
-          <strong><a href="https://jasonwxy.shinyapps.io/ESG_VAR_v0/">Demo 4</a></strong>&nbsp;-&nbsp;A toy app (implemented in R markdown flexdashboard) for Economic Scenario Generator (ESG). The ESG is specified by a Vector Autoregression model built on the chosen macro time series.
-        </h5>
-      
+<main>
+  <section class="section wrap">
+    <p class="kicker reveal">R Shiny <span class="n">·</span> Live demos</p>
+    <h2 class="reveal d1">Interactive <span class="accent">risk &amp; modeling</span> apps</h2>
+    <p class="section-intro reveal d2">Four working R Shiny demos — each one hosted live on shinyapps.io. Click through to launch.</p>
 
-      
+    <div class="grid grid--2" style="margin-top:2rem;">
+
+      <div class="card blue reveal d1">
+        <span class="card__label">Portfolio Analytics</span>
+        <h3>Portfolio exposure &amp; RWA dashboard</h3>
+        <p>A portfolio-management dashboard to visualize exposure metrics with drill-down (top drivers, historical trending) and <strong>period-over-period</strong> comparison — illustrating portfolio dynamics, credit-rating migration, and more.</p>
+        <div class="card__links">
+          <a class="card__cta" href="https://jason2003wxy.shinyapps.io/app_rwa_analysis/">Launch app <span class="arrow">↗</span></a>
+        </div>
       </div>
-    </div>
-  </div>
-</section>
 
-      
-    </div>
+      <div class="card green reveal d2">
+        <span class="card__label">Time-Series Forecasting</span>
+        <h3>ARIMA for financial time series</h3>
+        <p>An R Shiny app (built with <strong>modularization</strong>) for fitting ARIMA models to any financial time series pulled from the Yahoo API. Easily extended to multiple data sources (e.g., Quandl) and frequencies.</p>
+        <div class="card__links">
+          <a class="card__cta" href="https://jasonwxy.shinyapps.io/APP_ARIMA/">Launch app <span class="arrow">↗</span></a>
+          <a class="card__src" href="https://github.com/jason2003wxy/DB_ARIMA/blob/master/server.R">modularized source ↗</a>
+        </div>
+      </div>
 
-    
-    <footer>
-  <div id="footer">
-    <div class="container">
-      <p class="text-muted">&copy; All rights reserved. Powered by <a href="https://gohugo.io/">Hugo</a></p>
+      <div class="card amber reveal d3">
+        <span class="card__label">Stress Testing</span>
+        <h3>PPNR / PBIL stress-testing models</h3>
+        <p>An R Shiny app (modularized) illustrating the PRA's PPNR/PBIL stress-testing models based on BoE open data. Supports expert overrides on model specification and parameters, and can accommodate a bank's internal data.</p>
+        <div class="card__links">
+          <a class="card__cta" href="https://jasonwxy.shinyapps.io/PPNR_PRA_LM_v0/">Launch app <span class="arrow">↗</span></a>
+        </div>
+      </div>
+
+      <div class="card violet reveal d4">
+        <span class="card__label">Scenario Generation</span>
+        <div class="card__shot"><img src="/img/App_ESG_VAR_sim.png" alt="Economic Scenario Generator app screenshot"></div>
+        <h3>Economic Scenario Generator</h3>
+        <p>A toy app (R Markdown flexdashboard) for an Economic Scenario Generator (ESG), specified by a <strong>Vector Autoregression</strong> model built on the chosen macro time series.</p>
+        <div class="card__links">
+          <a class="card__cta" href="https://jasonwxy.shinyapps.io/ESG_VAR_v0/">Launch app <span class="arrow">↗</span></a>
+        </div>
+      </div>
+
     </div>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <p>© 2026 Jason Wang<span class="dot"> · </span>Risk Quant</p>
+    <p><a href="mailto:jason2003@gmail.com">jason2003@gmail.com</a></p>
   </div>
 </footer>
-<div class="footer"></div>
 
-
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
-
-<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
-<script src="/js/docs.min.js"></script>
 <script src="/js/main.js"></script>
-
-<script src="/js/ie10-viewport-bug-workaround.js"></script>
-
-
-    
-  </body>
+</body>
 </html>
