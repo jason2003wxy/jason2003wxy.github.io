@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8">
   <title>Claude Code Insights</title>
+  <link rel="icon" type="image/svg+xml" href="/img/favicon.svg">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -114,6 +115,106 @@
     .collapsible-content.open { display: block; }
     .collapsible-header.open .collapsible-arrow { transform: rotate(90deg); }
     @media (max-width: 640px) { .charts-row { grid-template-columns: 1fr; } .stats-row { justify-content: center; } }
+  </style>
+  <style>
+    /* ===== Dark theme (site redesign) — overrides the report's original light palette to match jason2003wxy.github.io ===== */
+    body { background:#0d1117; color:#c9d1d9; }
+    a { color:#58a6ff; }
+    a:hover { color:#a5d6ff; }
+    h1, h2 { color:#e6edf3; }
+    .subtitle, .section-intro { color:#9aa5b1; }
+
+    .nav-toc { background:#161b22; border-color:#30363d; }
+    .nav-toc a { color:#9aa5b1; background:#1b2230; }
+    .nav-toc a:hover { background:#30363d; color:#e6edf3; }
+
+    .stats-row { border-color:#30363d; }
+    .stat-value { color:#e6edf3; }
+    .stat-label { color:#9aa5b1; }
+
+    .at-a-glance { background:linear-gradient(135deg, rgba(210,153,34,.14), rgba(210,153,34,.05)); border-color:rgba(210,153,34,.4); }
+    .glance-title { color:#e3b341; }
+    .glance-section { color:#c9d1d9; }
+    .glance-section strong { color:#f0d68a; }
+    .see-more { color:#e3b341; }
+
+    .project-area { background:#161b22; border-color:#30363d; }
+    .area-name { color:#e6edf3; }
+    .area-count { color:#9aa5b1; background:#1b2230; }
+    .area-desc { color:#9aa5b1; }
+
+    .narrative { background:#161b22; border-color:#30363d; }
+    .narrative p { color:#9aa5b1; }
+
+    .key-insight { background:rgba(63,185,80,.09); border-color:rgba(63,185,80,.3); color:#7ee787; }
+
+    .big-win { background:rgba(63,185,80,.09); border-color:rgba(63,185,80,.3); }
+    .big-win-title { color:#3fb950; }
+    .big-win-desc { color:#a5d6b0; }
+
+    .friction-category { background:rgba(248,81,73,.08); border-color:rgba(248,81,73,.3); }
+    .friction-title { color:#ff7b72; }
+    .friction-desc { color:#ffa198; }
+    .friction-examples { color:#c9d1d9; }
+
+    .claude-md-section { background:rgba(88,166,255,.08); border-color:rgba(88,166,255,.28); }
+    .claude-md-section h3 { color:#58a6ff; }
+    .claude-md-actions { border-color:rgba(88,166,255,.2); }
+    .claude-md-item { border-color:rgba(88,166,255,.15); }
+    .cmd-code { background:#0d1117; color:#79c0ff; border-color:rgba(88,166,255,.25); }
+    .cmd-why { color:#8b949e; }
+
+    .copy-all-btn { background:#1f6feb; color:#fff; }
+    .copy-all-btn:hover { background:#388bfd; }
+    .copy-all-btn.copied { background:#238636; }
+    .copy-btn { background:#21262d; color:#9aa5b1; }
+    .copy-btn:hover { background:#30363d; }
+
+    .feature-card { background:rgba(63,185,80,.08); border-color:rgba(63,185,80,.28); }
+    .pattern-card { background:rgba(88,166,255,.07); border-color:rgba(88,166,255,.26); }
+    .feature-title, .pattern-title { color:#e6edf3; }
+    .feature-oneliner, .pattern-summary { color:#9aa5b1; }
+    .feature-why, .pattern-detail { color:#c9d1d9; }
+    .feature-example { border-color:rgba(63,185,80,.18); }
+    .example-desc { color:#c9d1d9; }
+    .example-code { background:#010409; color:#c9d1d9; }
+    .copyable-prompt-section { border-color:#30363d; }
+    .copyable-prompt { background:#010409; color:#c9d1d9; border-color:#30363d; }
+    .feature-code { background:#010409; border-color:#30363d; }
+    .feature-code code { color:#c9d1d9; }
+    .pattern-prompt { background:#010409; border-color:#30363d; }
+    .pattern-prompt code { color:#c9d1d9; }
+    .prompt-label { color:#8b949e; }
+
+    .chart-card { background:#161b22; border-color:#30363d; }
+    .chart-title { color:#9aa5b1; }
+    .bar-label { color:#9aa5b1; }
+    .bar-track { background:#21262d; }
+    .bar-value { color:#9aa5b1; }
+    .empty { color:#6e7681; }
+
+    .horizon-card { background:linear-gradient(135deg, rgba(188,140,255,.1), rgba(188,140,255,.04)); border-color:rgba(188,140,255,.3); }
+    .horizon-title { color:#bc8cff; }
+    .horizon-possible { color:#c9d1d9; }
+    .horizon-tip { color:#d2a8ff; background:rgba(188,140,255,.1); }
+
+    .feedback-header { color:#9aa5b1; }
+    .feedback-intro { color:#6e7681; }
+    .feedback-section h3 { color:#9aa5b1; }
+    .feedback-card { background:#161b22; border-color:#30363d; }
+    .feedback-card.team-card { background:rgba(88,166,255,.08); border-color:rgba(88,166,255,.28); }
+    .feedback-card.model-card { background:rgba(188,140,255,.08); border-color:rgba(188,140,255,.28); }
+    .feedback-title { color:#e6edf3; }
+    .feedback-detail { color:#9aa5b1; }
+    .feedback-evidence { color:#8b949e; }
+
+    .fun-ending { background:linear-gradient(135deg, rgba(210,153,34,.14), rgba(210,153,34,.05)); border-color:rgba(210,153,34,.4); }
+    .fun-headline { color:#e3b341; }
+    .fun-detail { color:#f0d68a; }
+
+    .collapsible-header { border-color:#30363d; }
+    .collapsible-header h3 { color:#9aa5b1; }
+    .collapsible-arrow { color:#6e7681; }
   </style>
 </head>
 <body>
